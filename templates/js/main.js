@@ -197,10 +197,10 @@ function update_spots_generic() {
                         car_label = this.label;
                     }
                 }
-
+				
                 $.each(data["inside_spots"], inside_spots_populator);
                 $.each(data["outside_spots"], outside_spots_populator);
-
+				
                 if (inside_parked) {
                     // Already parked inside!
                     listhtml += '<li><h3>Parking for your <strong>' + car_label + '</strong> reserved <strong>inside</strong>!</h3><h5 class="ui-li-heading-small">Lobby Phone#: <a href="tel:036071812">03-607-1812</a></h5></li>';
@@ -370,7 +370,45 @@ function leave_spot(plate)
         });
 }
 
-function reserve_spot(plate)
+function update_toss() {
+    sl = $('ul#toss');
+    sl.children().empty(); // Clear the list
+    listhtml = "";
+
+    $.mobile.showPageLoadingMsg();
+
+    $.ajax({
+        url: '/gettoss',
+        dataType: 'json',
+        success: function (data) {
+            $.mobile.hidePageLoadingMsg();
+            if (data["result"] == "error") {
+                alert(data["reason"]);
+                alert(data["args"]);
+                $.mobile.changePage('#main');
+            }
+            else {
+				listhtml += '<li><h3>Tomorrow reservation</h3></li>';
+				if(data['reservedForTommorow'] == '1') {	
+					// Already reserved spot for tommorow
+					listhtml += '<li><a href="#deleteReserveForTomorrow" data-rel="popup" data-transition="pop"><h3>Delete reservation</h3></a></li>';
+				} else {
+					listhtml += '<li><a href="#reserveForTomorrow" data-rel="popup" data-transition="pop"><h3>Reserve</h3></a></li>';
+				}
+
+                sl.html(listhtml);
+                sl.listview("refresh");
+            }
+        },
+        error: function (data) {
+            alert("Unexpected error has occured!");
+            $.mobile.hidePageLoadingMsg();
+            $.mobile.changePage('#main');
+        }
+    });
+}
+
+function reserve_spot_specific(plate)
 {
     $("body").addClass("ui-disabled");
     $.mobile.showPageLoadingMsg();
@@ -405,7 +443,7 @@ function reserve_spot(plate)
         });
 }
 
-function unreserve_spot()
+function unreserve_spot_specific()
 {
     $("body").addClass("ui-disabled");
     $.mobile.showPageLoadingMsg();
@@ -438,6 +476,76 @@ function unreserve_spot()
             $.mobile.changePage('#future');
         }
         });
+}
+
+function reserve_spot_for_tomorrow(plate)
+{
+    $("body").addClass("ui-disabled");
+    $.mobile.showPageLoadingMsg();
+
+	$.ajax({
+		url: '/reserveSpotForTommorow?reserve=1&plate=' + plate + '&preferSpotOutside=' + ($('input#preferSpotOutside').prop("checked")? "1":"0"),
+		dataType: 'json',
+		success: function(data) {
+			if (data["result"] == "error")
+			{
+				alert(data["reason"]);
+				alert(data["args"]);
+				$.mobile.hidePageLoadingMsg();
+				$("body").removeClass("ui-disabled");
+				$.mobile.changePage('#main');
+			}
+			else
+			{
+				setTimeout(function()
+					{
+						document.location = document.location.protocol + "//" + document.location.host + document.location.pathname + "#main";
+						document.location.reload(true);
+					}, 500);
+			}
+		},
+		error: function(data) {
+			alert("Unexpected error has occured!");
+			$.mobile.hidePageLoadingMsg();
+			$("body").removeClass("ui-disabled");
+			$.mobile.changePage('#main');
+		}
+		});
+}
+
+function delete_reserve_spot_for_tomorrow()
+{
+    $("body").addClass("ui-disabled");
+    $.mobile.showPageLoadingMsg();
+	
+	$.ajax({
+		url: '/reserveSpotForTommorow?reserve=0',
+		dataType: 'json',
+		success: function(data) {
+			if (data["result"] == "error")
+			{
+				alert(data["reason"]);
+				alert(data["args"]);
+				$.mobile.hidePageLoadingMsg();
+				$("body").removeClass("ui-disabled");
+				$.mobile.changePage('#main');
+			}
+			else
+			{
+				setTimeout(function()
+					{
+						document.location = document.location.protocol + "//" + document.location.host + document.location.pathname + "#main";
+						document.location.reload(true);
+					}, 500);
+			}
+		},
+		error: function(data) {
+			alert("Unexpected error has occured!");
+			$.mobile.hidePageLoadingMsg();
+			$("body").removeClass("ui-disabled");
+			$.mobile.changePage('#main');
+		}
+		});
 }
 
 function update_theme()
@@ -477,6 +585,7 @@ $('#future').on('pageshow', function (event) {
 });
 
 $('#main').on('pageshow', function (event) {
+    update_toss();
     {% if enablespotspecification %}
     update_spots_specific();
     {% else %}

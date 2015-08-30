@@ -17,12 +17,51 @@
 import webapp2
 import shared
 from datamodel import *
+from random import shuffle
 
 class Clear(webapp2.RequestHandler):
     def get(self):
         if not shared.is_weekend():
             for spot in Spot.all().filter("future = ", False):
                 spot.Release()
+            self.tossReservationForTomorrow()
+		
+    def tossReservationForTomorrow(self):
+        carMustGetSpot = []
+        carInToss = []
+        
+        #create two list of cars - must get spot and not
+        for reservation in TossReservation.all():
+            if reservation.car is not None:
+                if UserData.all().filter("user =", reservation.car.owner).get().mustGetSpot:
+                    carMustGetSpot.append((reservation.car, reservation.preferSpotOutside))
+                else:
+                    carInToss.append((reservation.car, reservation.preferSpotOutside))
+        
+        # random the list of all cars don't must get spot
+        shuffle(carInToss)
+        
+        #allocate spots for all users
+        for spot in Spot.all().filter("future = ", False).order("outside"):
+            if spot.free:
+                if len(carMustGetSpot) != 0:
+                    index = 0 #index of car in toss
+                    while((spot.outside == False) and (index < len(carMustGetSpot)) and (carMustGetSpot[index][1])):
+                        index = index + 1
+                    if index < len(carMustGetSpot): # if the we found index of car in carMustGetSpot
+                        spot.Take(carMustGetSpot.pop(index)[0])
+                elif len(carInToss) != 0:
+                    index = 0 #index of car in toss
+                    while((spot.outside == False) and (index < len(carInToss)) and (carInToss[index][1])):
+                        index = index + 1
+                    if index < len(carInToss): # if we found index of car in carInToss
+                        spot.Take(carInToss.pop(index)[0])
+        #TODO send mails
+        
+        #delete all TossReservation
+        for toss in TossReservation.all():
+            if toss.car is not None:
+                toss.Reserve(False)
         
 class InitSpots(webapp2.RequestHandler):
     def get(self):
@@ -55,7 +94,7 @@ class InitCars(webapp2.RequestHandler):
 class MigrateConfigSchema(webapp2.RequestHandler):
     def get(self):
         self.response.out.write('Upgrading configurations...')
-        updated = Configuration.MigrateConfigurationSchema()
+        updated = UserData.MigrateUserDataSchema()
         self.response.out.write(' OK!\r\n<br>')
         self.response.out.write('Upgraded %d configurations!' % updated)
 

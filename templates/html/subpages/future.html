@@ -107,7 +107,7 @@
                                 <div class="ui-block-a">
                                     <div data-corners="true" data-shadow="true" data-iconshadow="true" data-wrapperels="span" data-theme="b" data-disabled="false" class="ui-submit ui-btn ui-btn-up-b ui-shadow ui-btn-corner-all" aria-disabled="false">
                                         <span class="ui-btn-inner">
-                                            <span class="ui-btn-text"><a href="#future" onclick="reserve_spot({{ guestcar.plate }});" data-inline="true">Reserve spot</a></span>
+                                            <span class="ui-btn-text"><a href="#future" onclick="reserve_spot_specific({{ guestcar.plate }});" data-inline="true">Reserve spot</a></span>
                                         </span>
                                     </div>
                                 </div>
@@ -142,7 +142,7 @@
                     <!--nativeDroid workaround-->
                     <ul data-role="listview" data-inset="true">
                         {% for car in usercars %}
-                        <li><a href="#main" onclick="reserve_spot({{ car.plate }});">{{ car.make }} {{ car.model }} // {{ car.color.title() }}</a></li>
+                        <li><a href="#main" onclick="reserve_spot_specific({{ car.plate }});">{{ car.make }} {{ car.model }} // {{ car.color.title() }}</a></li>
                         {% endfor %}
                         <li><a href="#confirmguestreserve" data-rel="popup" data-transition="pop">{{ guestcar.make }} {{ guestcar.model }} // {{ guestcar.color.title() }}</a></li>
                     </ul>

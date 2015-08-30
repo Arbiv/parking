@@ -17,10 +17,10 @@ class MainHandler(webapp2.RequestHandler):
         user.inside = False
         editablecars = list(Car.all().filter("owner = ", user).filter("plate != ", GUEST_PLATE))
         usercars = editablecars
-        enablereservations = Configuration.GetEnableReservations()
-        enablespotspecification = Configuration.GetEnableSpotSpecification()
+        mustGetSpot = UserData.GetMustGetSpot()
+        multipleSpots = UserData.GetMultipleSpots()
         spots = list(Spot.all().filter("future = ", False))
-        themename, subtheme, themecolor = Configuration.GetTheme()
+        themename, subtheme, themecolor = UserData.GetTheme()
 
         main        = JINJA_ENV.get_template('templates/html/subpages/main.html')
         downtime    = JINJA_ENV.get_template('templates/html/subpages/downtime.html')
@@ -31,8 +31,8 @@ class MainHandler(webapp2.RequestHandler):
         mainpage_values = {
             "logout_url": logout_url,
             "user": user,
-            "enablereservations": enablereservations,
-            "enablespotspecification": enablespotspecification,
+            "mustGetSpot": mustGetSpot,
+            "multipleSpots": multipleSpots,
             "freespots": len([spot for spot in spots if spot.free]),
             "totalspots": len(spots),
             "usercars": usercars,
@@ -43,7 +43,7 @@ class MainHandler(webapp2.RequestHandler):
         downtime_values = {
             "logout_url": logout_url,
             "user": user,
-            "enablereservations": enablereservations,
+            "mustGetSpot": mustGetSpot,
             }
         downtimepage = downtime.render(downtime_values)
 
@@ -56,7 +56,7 @@ class MainHandler(webapp2.RequestHandler):
 
         future_values = {
             "logout_url": logout_url,
-            "enablereservations": enablereservations,
+            "mustGetSpot": mustGetSpot,
             "freespots": len([spot for spot in spots if spot.free]),
             "totalspots": len(spots),
             "reservablespots": len([spot for spot in spots if not spot.reserved]),
@@ -78,12 +78,12 @@ class MainHandler(webapp2.RequestHandler):
 
 class ScriptHandler(webapp2.RequestHandler):
     def get(self):
-        enablespotspecification = Configuration.GetEnableSpotSpecification()
+        multipleSpots = UserData.GetMultipleSpots()
         
         script_tpl = JINJA_ENV.get_template('templates/js/main.js')
 
         script_values = {
-            "enablespotspecification": enablespotspecification,
+            "multipleSpots": multipleSpots,
             }
         script = script_tpl.render(script_values)
 
@@ -151,7 +151,7 @@ class GetSpotsHandler(webapp2.RequestHandler):
                         jspot['label'] = "Reserved"
                         jspot['plate'] = GUEST_PLATE
                         jspot['prettyplate'] = spot.car.prettyplate()
-                        jspot['leavable'] = Configuration.GetEnableSpotSpecification()
+                        jspot['leavable'] = UserData.GetMultipleSpots()
                     else:
                         if spot.car.owner == user:
                             user.inside = True
@@ -217,6 +217,27 @@ class GetFutureSpotsHandler(webapp2.RequestHandler):
                       "args"  : self.request.arguments()
                       }
         self.response.out.write(json.dumps(result))
+
+class GetTossHandler(webapp2.RequestHandler):
+    def get(self):
+        try:
+            user = users.get_current_user()
+            user.name = make_name(user)
+            
+            allToss = TossReservation.all()
+            result = {}
+            result['reservedForTommorow'] = '0'
+            for toss in allToss:
+				if toss.car is not None and toss.car.plate != GUEST_PLATE:
+					if toss.car.owner == user:
+						result['reservedForTommorow'] = '1'
+            result['result'] = 'success'
+        except Exception, e:
+            result = {"result": "error",
+                      "reason": `e`,
+                      "args"  : self.request.arguments()
+                      }
+        self.response.out.write(json.dumps(result))
         
 class TakeSpotHandler(webapp2.RequestHandler):
     def _take_specific(self):
@@ -246,7 +267,7 @@ class TakeSpotHandler(webapp2.RequestHandler):
             elif self.request.get('spottype') == 'outside':
                 self._take_outside()
             else:
-                assert Configuration.GetEnableSpotSpecification(), Exception("This incident will be reported.")
+                assert UserData.GetMultipleSpots(), Exception("This incident will be reported.")
                 self._take_specific()
             
             result['result'] = 'success'
@@ -311,7 +332,7 @@ class SetThemeHandler(webapp2.RequestHandler):
         try:
             result = {}
             
-            Configuration.SetTheme(
+            UserData.SetTheme(
                                    self.request.get('themename'),
                                    self.request.get('subtheme'),
                                    self.request.get('themecolor')
@@ -324,3 +345,24 @@ class SetThemeHandler(webapp2.RequestHandler):
                       "args"  : self.request.arguments()
                       }
         self.response.out.write(json.dumps(result))
+		
+class ReserveForTommorowHandler(webapp2.RequestHandler):
+    def get(self):
+	    result = {}
+	    try:
+			if bool(int(self.request.get('reserve'))):
+				toss = TossReservation()
+				preferSpotOutside = bool(int(self.request.get('preferSpotOutside')))
+				car = Car.get(db.Key.from_path("Car", self.request.get('plate').replace('-','')))
+				toss.Reserve(True, car, preferSpotOutside)
+			else:
+				for toss in TossReservation.all():
+					if toss.car is not None and toss.car.owner == users.get_current_user():
+						toss.Reserve(False)
+			result['result'] = 'success'
+	    except Exception, e:
+			result = {"result": "error",
+                      "reason": `e`,
+                      "args"  : self.request.arguments()
+                      }
+	    self.response.out.write(json.dumps(result))

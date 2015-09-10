@@ -203,11 +203,11 @@ function update_spots_generic() {
 				
                 if (inside_parked) {
                     // Already parked inside!
-                    listhtml += '<li><h3>Parking for your <strong>' + car_label + '</strong> reserved <strong>inside</strong>!</h3><h5 class="ui-li-heading-small">Lobby Phone#: <a href="tel:036071812">03-607-1812</a></h5></li>';
+                    listhtml += '<li><h3>Today reservation: Parking for your <strong>' + car_label + '</strong> reserved <strong>inside</strong>!</h3><h5 class="ui-li-heading-small">Lobby Phone#: <a href="tel:036071812">03-607-1812</a></h5></li>';
                     listhtml += '<li><a href="#confirmleave" data-rel="popup" data-transition="pop"><h3>Leave</h3></a></li>';
                 } else if (outside_parked) {
                     // Already parked outside!
-                    listhtml += '<li><h3>Parking for your <strong>' + car_label + '</strong> reserved <strong>outside</strong>!</h3><h5 class="ui-li-heading-small">Moshe Salti Parking Lot</h5></li>';
+                    listhtml += '<li><h3>Today reservation: Parking for your <strong>' + car_label + '</strong> reserved <strong>outside</strong>!</h3><h5 class="ui-li-heading-small">Moshe Salti Parking Lot</h5></li>';
                     listhtml += '<li><a href="#confirmleave" data-rel="popup" data-transition="pop"><h3>Leave</h3></a></li>';
                 } else {
                     // Inside spots
@@ -388,7 +388,7 @@ function update_toss() {
                 $.mobile.changePage('#main');
             }
             else {
-				listhtml += '<li><h3>Tomorrow reservation</h3></li>';
+				listhtml += '<li><h3>Tomorrow reservation:</h3></li>';
 				if(data['reservedForTommorow'] == '1') {	
 					// Already reserved spot for tommorow
 					listhtml += '<li><a href="#deleteReserveForTomorrow" data-rel="popup" data-transition="pop"><h3>Delete reservation</h3></a></li>';

@@ -3,14 +3,13 @@
     Parameters:
     
     logout_url: string, URL for logging out
-    enablereservations: Boolean, true if user can make reservations, false otherwise
+    multipleSpots: Boolean, true if user can make future reservations, false otherwise
     freespots: int, number of free spots
     totalspots: int, spots count
     reservablespots: int, number of free spots
     usercars: list of cars belonging to current user
 -->
 
-{% if enablereservations %}
 {% block pageid %}future{% endblock %}
 
 {% block header %}
@@ -18,8 +17,14 @@
         <h1>Future parking</h1>
 {% endblock %}
 
+
 {% block content %}
-        {% if not reservablespots %}
+        {% if not multipleSpots %}
+            <div class="message error">
+                <i class="icon-exclamation-sign"></i>
+                <h2>Fuck You!</h2>
+            </div>
+        {% elif not reservablespots %}
         <div class="message error">
             <i class="icon-exclamation-sign"></i>
             <h2>No free spots left!</h2>
@@ -37,6 +42,7 @@
 
         <progress value="{{ freespots }}" max="{{ totalspots }}"></progress>
 		
+        {% if multipleSpots %}
         <div class="content-primary">
             <div class="inset"><!--nativeDroid workaround-->
                 <ul data-role="listview" data-inset="true" id="futurespotlist">
@@ -44,6 +50,7 @@
                 </ul>
             </div>
 		</div><!--/content-primary -->
+        {% endif %}
         
         <form>
             <input id="reservespotnumber" type="hidden"></input>
@@ -154,6 +161,8 @@
             </div><!-- /footer -->
         </div><!-- /popup confirmreserve -->
 {% endblock %}
+
+
 {% block footer %}
         <div data-role="navbar">
             <ul>
@@ -162,4 +171,3 @@
             </ul>
         </div>
 {% endblock %}
-{% endif %}

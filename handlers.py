@@ -56,7 +56,7 @@ class MainHandler(webapp2.RequestHandler):
 
         future_values = {
             "logout_url": logout_url,
-            "mustGetSpot": mustGetSpot,
+            "multipleSpots": multipleSpots,
             "freespots": len([spot for spot in spots if spot.free]),
             "totalspots": len(spots),
             "reservablespots": len([spot for spot in spots if not spot.reserved]),

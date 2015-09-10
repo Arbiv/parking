@@ -586,7 +586,7 @@ $('#future').on('pageshow', function (event) {
 
 $('#main').on('pageshow', function (event) {
     update_toss();
-    {% if enablespotspecification %}
+    {% if multipleSpots %}
     update_spots_specific();
     {% else %}
     update_spots_generic();

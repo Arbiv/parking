@@ -69,7 +69,7 @@ class MainHandler(webapp2.RequestHandler):
             "themename": themename,
             "subtheme": subtheme,
             "themecolor": themecolor,
-            "mainpage": downtimepage if is_downtime() else mainpage,
+            "mainpage": mainpage,
             "optionspage": optionspage,
             "futurepage": futurepage,
             }
@@ -261,7 +261,6 @@ class TakeSpotHandler(webapp2.RequestHandler):
     def get(self):
         result = {}
         try:
-            assert is_downtime() == False
             if self.request.get('spottype') == 'inside':
                 self._take_inside()
             elif self.request.get('spottype') == 'outside':
@@ -291,7 +290,6 @@ class LeaveSpotHandler(webapp2.RequestHandler):
     def get(self):
         result = {}
         try:
-            assert is_downtime() == False
             if self.request.get('spotnumber') != "":
                 self._leave_specific()
             else:

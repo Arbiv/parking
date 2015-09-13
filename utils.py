@@ -19,8 +19,10 @@ import shared
 from datamodel import *
 from random import shuffle
 from google.appengine.api import mail
+import logging
 
 mail_sender = "C4 Parking <c4-parking@appspot.gserviceaccount.com>"
+mail_suffix = '@c4-security.com'
 class Clear(webapp2.RequestHandler):
     def get(self):
         if not shared.is_weekend():
@@ -67,11 +69,13 @@ class Clear(webapp2.RequestHandler):
         #send mails for users that have spot
         for spot in Spot.all().filter("future = ", False):
             if not spot.free and spot.car is not None and spot.car.plate != GUEST_PLATE:
-                msgSubject = ""
-                msgBody = ""
+                message = mail.EmailMessage()
+                message.sender=mail_sender
+                message.to=str(spot.car.owner)+mail_suffix
                 if spot.outside:
-                    msgSubject = "Parking Reservation - Accepted (Outside)"
-                    msgBody = """
+                    logging.info('outside- car plate:'+str(spot.car.plate)+', owner:'+str(spot.car.owner))
+                    message.subject = "Parking Reservation - Accepted (Outside)"
+                    message.body = """
                     Congratulations!
                     Your spot reservation for today was accepted.
                     Please park outside at 'Moshe Salti' Parking Lot.
@@ -79,27 +83,29 @@ class Clear(webapp2.RequestHandler):
                     Have a nice day! :)
                     """
                 else:
-                    msgSubject = "Parking Reservation - Accepted (Inside)"
-                    msgBody = """
+                    logging.info('inside - car plate:'+str(spot.car.plate)+', owner:'+str(spot.car.owner))
+                    message.subject = "Parking Reservation - Accepted (Inside)"
+                    message.body = """
                     Congratulations!
                     Your spot reservation for today was accepted.
                     Please park inside. Authorized your car number before coming, lobby phone#: 03-607-1812.
                     
                     Have a nice day! :)
                     """
-                mail.send_mail(sender=mail_sender, to=spot.car.owner, subject=msgSubject, body=msgBody)
+                message.send()
         
         #send mails for users that don't have spots       
         for car in carInToss:
-            msgSubject = "Parking Reservation - Rejected!"
-            msgBody = """
+            logging.info('NO SPOT - car plate:'+str(car.plate)+', owner:'+str(car.owner))
+            message = mail.EmailMessage(sender=mail_sender, to=str(car.owner)+mail_suffix, subject = "Parking Reservation - Rejected!")
+            message.body = """
             Sorry!
             Your spot reservation for today was rejected.
             Try next time.
             
             Have a nice day! :)
             """
-            mail.send_mail(sender=mail_sender, to=car.owner, subject=msgSubject, body=msgBody)
+            message.send()
             
 
 class InitSpots(webapp2.RequestHandler):

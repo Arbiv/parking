@@ -76,35 +76,35 @@ class Clear(webapp2.RequestHandler):
                     logging.info('outside- car plate:'+str(spot.car.plate)+', owner:'+str(spot.car.owner))
                     message.subject = "Parking Reservation - Accepted (Outside)"
                     message.body = """
-                    Congratulations!
-                    Your spot reservation for today was accepted.
-                    Please park outside at 'Moshe Salti' Parking Lot.
-                    
-                    Have a nice day! :)
-                    """
+Congratulations!
+Your spot reservation for today was accepted.
+Please park outside at 'Moshe Salti' Parking Lot.
+
+Have a nice day! :)
+"""
                 else:
                     logging.info('inside - car plate:'+str(spot.car.plate)+', owner:'+str(spot.car.owner))
                     message.subject = "Parking Reservation - Accepted (Inside)"
                     message.body = """
-                    Congratulations!
-                    Your spot reservation for today was accepted.
-                    Please park inside. Authorized your car number before coming, lobby phone#: 03-607-1812.
-                    
-                    Have a nice day! :)
-                    """
+Congratulations!
+Your spot reservation for today was accepted.
+Please park inside. Authorized your car number before coming, lobby phone#: 03-607-1812.
+
+Have a nice day! :)
+"""
                 message.send()
         
         #send mails for users that don't have spots       
-        for car in carInToss:
-            logging.info('NO SPOT - car plate:'+str(car.plate)+', owner:'+str(car.owner))
-            message = mail.EmailMessage(sender=mail_sender, to=str(car.owner)+mail_suffix, subject = "Parking Reservation - Rejected!")
+        for reservation in carInToss:
+            logging.info('NO SPOT - car plate:'+str(reservation.car.plate)+', owner:'+str(reservation.car.owner))
+            message = mail.EmailMessage(sender=mail_sender, to=str(reservation.car.owner)+mail_suffix, subject = "Parking Reservation - Rejected!")
             message.body = """
-            Sorry!
-            Your spot reservation for today was rejected.
-            Try next time.
-            
-            Have a nice day! :)
-            """
+Sorry!
+Your spot reservation for today was rejected.
+Try next time.
+
+Have a nice day! :)
+"""
             message.send()
             
 

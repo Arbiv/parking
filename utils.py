@@ -96,8 +96,8 @@ Have a nice day! :)
         
         #send mails for users that don't have spots       
         for reservation in carInToss:
-            logging.info('NO SPOT - car plate:'+str(reservation.car.plate)+', owner:'+str(reservation.car.owner))
-            message = mail.EmailMessage(sender=mail_sender, to=str(reservation.car.owner)+mail_suffix, subject = "Parking Reservation - Rejected!")
+            logging.info('NO SPOT - car plate:'+str(reservation[0].plate)+', owner:'+str(reservation[0].owner))
+            message = mail.EmailMessage(sender=mail_sender, to=str(reservation[0].owner)+mail_suffix, subject = "Parking Reservation - Rejected!")
             message.body = """
 Sorry!
 Your spot reservation for today was rejected.

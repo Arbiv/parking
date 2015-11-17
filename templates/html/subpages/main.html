@@ -88,7 +88,7 @@
                         {% for car in usercars %}
                         <li><a href="#main" onclick="take_spot({{ car.plate }});">{{ car.make }} {{ car.model }} // {{ car.color.title() }}</a></li>
                         {% endfor %}
-                        {% if enablespotspecification %}
+                        {% if multipleSpots %}
                         <li><a href="#main" onclick="take_spot({{ guestcar.plate }});">{{ guestcar.make }} {{ guestcar.model }} // {{ guestcar.color.title() }}</a></li>
                         {% endif %}
                     </ul>
@@ -113,7 +113,7 @@
                         {% for car in usercars %}
                         <li><a href="#main" onclick="reserve_spot_for_tomorrow({{ car.plate }});">{{ car.make }} {{ car.model }} // {{ car.color.title() }}</a></li>
                         {% endfor %}
-                        {% if enablespotspecification %}
+                        {% if multipleSpots %}
                         <li><a href="#main" onclick="reserve_spot_for_tomorrow({{ guestcar.plate }});">{{ guestcar.make }} {{ guestcar.model }} // {{ guestcar.color.title() }}</a></li>
                         {% endif %}
                     </ul>

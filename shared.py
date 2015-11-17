@@ -8,7 +8,7 @@ import random
 #############
 
 INSIDE_SPOTS_COUNT = 5
-OUTSIDE_SPOTS_COUNT = 18
+OUTSIDE_SPOTS_COUNT = 28
 GUEST_PLATE = 9999999
 
 ############

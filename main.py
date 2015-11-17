@@ -23,10 +23,12 @@ app = webapp2.WSGIApplication([
                               ('/user/delcar', DeleteCarHandler),
                               ('/getspots', GetSpotsHandler),
                               ('/getfuturespots', GetFutureSpotsHandler),
+							  ('/gettoss', GetTossHandler),
                               ('/takespot', TakeSpotHandler),
                               ('/leavespot', LeaveSpotHandler),
                               ('/reservespot', ReserveSpotHandler),
                               ('/settheme', SetThemeHandler),
                               ('/script.js', ScriptHandler),
+							  ('/reserveSpotForTommorow', ReserveForTommorowHandler),
                               ('/', MainHandler)],
                               debug=True)

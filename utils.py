@@ -17,13 +17,97 @@
 import webapp2
 import shared
 from datamodel import *
+from random import shuffle
+from google.appengine.api import mail
+import logging
 
+mail_sender = "C4 Parking <c4-parking@appspot.gserviceaccount.com>"
+mail_suffix = '@c4-security.com'
 class Clear(webapp2.RequestHandler):
     def get(self):
         if not shared.is_weekend():
             for spot in Spot.all().filter("future = ", False):
                 spot.Release()
+            self.tossReservationForTomorrow()
+		
+    def tossReservationForTomorrow(self):
+        carMustGetSpot = []
+        carInToss = []
         
+        #create two list of cars - must get spot and not
+        for reservation in TossReservation.all():
+            if reservation.car is not None:
+                if UserData.all().filter("user =", reservation.car.owner).get().mustGetSpot:
+                    carMustGetSpot.append((reservation.car, reservation.preferSpotOutside))
+                else:
+                    carInToss.append((reservation.car, reservation.preferSpotOutside))
+        
+        # random the list of all cars don't must get spot
+        shuffle(carInToss)
+        
+        #allocate spots for all users
+        for spot in Spot.all().filter("future = ", False).order("outside"):
+            if spot.free:
+                if len(carMustGetSpot) != 0:
+                    index = 0 #index of car in toss
+                    while((spot.outside == False) and (index < len(carMustGetSpot)) and (carMustGetSpot[index][1])):
+                        index = index + 1
+                    if index < len(carMustGetSpot): # if the we found index of car in carMustGetSpot
+                        spot.Take(carMustGetSpot.pop(index)[0])
+                elif len(carInToss) != 0:
+                    index = 0 #index of car in toss
+                    while((spot.outside == False) and (index < len(carInToss)) and (carInToss[index][1])):
+                        index = index + 1
+                    if index < len(carInToss): # if we found index of car in carInToss
+                        spot.Take(carInToss.pop(index)[0])
+                        
+        #delete all TossReservation
+        for toss in TossReservation.all():
+            if toss.car is not None:
+                toss.Reserve(False)
+        
+        #send mails for users that have spot
+        for spot in Spot.all().filter("future = ", False):
+            if not spot.free and spot.car is not None and spot.car.plate != GUEST_PLATE:
+                message = mail.EmailMessage()
+                message.sender=mail_sender
+                message.to=str(spot.car.owner)+mail_suffix
+                if spot.outside:
+                    logging.info('outside- car plate:'+str(spot.car.plate)+', owner:'+str(spot.car.owner))
+                    message.subject = "Parking Reservation - Accepted (Outside)"
+                    message.body = """
+Congratulations!
+Your spot reservation for today was accepted.
+Please park outside at 'Moshe Salti' Parking Lot.
+
+Have a nice day! :)
+"""
+                else:
+                    logging.info('inside - car plate:'+str(spot.car.plate)+', owner:'+str(spot.car.owner))
+                    message.subject = "Parking Reservation - Accepted (Inside)"
+                    message.body = """
+Congratulations!
+Your spot reservation for today was accepted.
+Please park inside. Authorized your car number before coming, lobby phone#: 03-607-1812.
+
+Have a nice day! :)
+"""
+                message.send()
+        
+        #send mails for users that don't have spots       
+        for reservation in carInToss:
+            logging.info('NO SPOT - car plate:'+str(reservation[0].plate)+', owner:'+str(reservation[0].owner))
+            message = mail.EmailMessage(sender=mail_sender, to=str(reservation[0].owner)+mail_suffix, subject = "Parking Reservation - Rejected!")
+            message.body = """
+Sorry!
+Your spot reservation for today was rejected.
+Try next time.
+
+Have a nice day! :)
+"""
+            message.send()
+            
+
 class InitSpots(webapp2.RequestHandler):
     def get(self):
 
@@ -55,7 +139,7 @@ class InitCars(webapp2.RequestHandler):
 class MigrateConfigSchema(webapp2.RequestHandler):
     def get(self):
         self.response.out.write('Upgrading configurations...')
-        updated = Configuration.MigrateConfigurationSchema()
+        updated = UserData.MigrateUserDataSchema()
         self.response.out.write(' OK!\r\n<br>')
         self.response.out.write('Upgraded %d configurations!' % updated)
 

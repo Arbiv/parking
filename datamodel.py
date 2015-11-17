@@ -115,64 +115,80 @@ class Spot(db.Model):
             self.Take(self.reserved.car, self.reserved.comments)
             self.Reserve(False)
 
-class Configuration(db.Model):
-    owner = db.UserProperty(required=True, auto_current_user_add=True)
+class UserData(db.Model):
+    user = db.UserProperty(required=True, auto_current_user_add=True)
     themename = db.StringProperty(required=True, choices=set(["nativedroid"]), default="nativedroid")
     subtheme = db.StringProperty(required=True, choices=set(["light", "dark"]), default="light")
     themecolor = db.StringProperty(required=True, choices=set(["blue", "green", "purple", "red", "yellow"]), default="blue")
-    enablereservations = db.BooleanProperty(required=True, default=False)
-    enablespotspecification = db.BooleanProperty(required=True, default=False)
+    mustGetSpot = db.BooleanProperty(required=True, default=False)
+    multipleSpots = db.BooleanProperty(required=True, default=False)
 
     @staticmethod
     def GetTheme():
         try:
-            cfg = list(Configuration.all().filter("owner = ", users.get_current_user()))[0]
+            cfg = list(UserData.all().filter("user = ", users.get_current_user()))[0]
         except:
-            cfg = Configuration()
+            cfg = UserData()
             cfg.put()
         return cfg.themename, cfg.subtheme, cfg.themecolor
 
     @staticmethod
     def SetTheme(themename, subtheme, themecolor):
         try:
-            cfg = list(Configuration.all().filter("owner = ", users.get_current_user()))[0]
+            cfg = list(UserData.all().filter("user = ", users.get_current_user()))[0]
         except:
-            cfg = Configuration()
+            cfg = UserData()
         cfg.themename   = themename
         cfg.subtheme    = subtheme
         cfg.themecolor  = themecolor
         cfg.put()
 
     @staticmethod
-    def GetEnableReservations():
+    def GetMustGetSpot():
         try:
-            cfg = list(Configuration.all().filter("owner = ", users.get_current_user()))[0]
-            return cfg.enablereservations
+            cfg = list(UserData.all().filter("user = ", users.get_current_user()))[0]
+            return cfg.mustGetSpot
         except:
             return False
 
     @staticmethod
-    def GetEnableSpotSpecification():
+    def GetMultipleSpots():
         try:
-            cfg = list(Configuration.all().filter("owner = ", users.get_current_user()))[0]
-            return cfg.enablespotspecification
+            cfg = list(UserData.all().filter("user = ", users.get_current_user()))[0]
+            return cfg.multipleSpots
         except:
             return False
 
     @staticmethod
-    def MigrateConfigurationSchema():
+    def MigrateUserDataSchema():
         updated = []
         
-        for cfg in Configuration.all():
+        for cfg in UserData.all():
             try:
-                cfg.enablereservations = cfg.enablereservations
-                cfg.enablespotspecification = cfg.enablespotspecification
+                cfg.mustGetSpot = cfg.mustGetSpot
+                cfg.multipleSpots = cfg.multipleSpots
             except:
-                cfg.enablereservations = False
-                cfg.enablespotspecification = False
+                cfg.mustGetSpot = False
+                cfg.multipleSpots = False
             updated.append(cfg)
 
         if updated:
             db.put(updated)
 
         return len(updated)
+		
+class TossReservation(db.Model):
+	preferSpotOutside = db.BooleanProperty()
+	car = db.ReferenceProperty(reference_class=Car)
+
+	def Reserve(self, reserve, car=None, preferSpotOutside = False):
+		if reserve: #join the toss
+		    if not car:
+				car = Car.GuestCar()
+		    if car != Car.GuestCar():
+				comments = ""
+		    self.car = car
+		    self.preferSpotOutside = preferSpotOutside
+		    self.put()
+		else: #unjoin toss
+		    self.delete()

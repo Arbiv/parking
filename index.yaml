@@ -14,3 +14,8 @@ indexes:
   properties:
   - name: owner
   - name: plate
+
+- kind: Spot
+  properties:
+  - name: future
+  - name: outside

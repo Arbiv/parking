@@ -19,6 +19,7 @@ class MainHandler(webapp2.RequestHandler):
         usercars = editablecars
         mustGetSpot = UserData.GetMustGetSpot()
         multipleSpots = UserData.GetMultipleSpots()
+        isViewer = UserData.GetIsViewer()
         spots = list(Spot.all().filter("future = ", False))
         themename, subtheme, themecolor = UserData.GetTheme()
 
@@ -33,6 +34,7 @@ class MainHandler(webapp2.RequestHandler):
             "user": user,
             "mustGetSpot": mustGetSpot,
             "multipleSpots": multipleSpots,
+            "isViewer": isViewer,
             "freespots": len([spot for spot in spots if spot.free]),
             "totalspots": len(spots),
             "usercars": usercars,
@@ -79,11 +81,13 @@ class MainHandler(webapp2.RequestHandler):
 class ScriptHandler(webapp2.RequestHandler):
     def get(self):
         multipleSpots = UserData.GetMultipleSpots()
+        isViewer = UserData.GetIsViewer()
         
         script_tpl = JINJA_ENV.get_template('templates/js/main.js')
 
         script_values = {
             "multipleSpots": multipleSpots,
+            "isViewer": isViewer,
             }
         script = script_tpl.render(script_values)
 

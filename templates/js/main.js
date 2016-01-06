@@ -114,20 +114,28 @@ function update_spots_specific()
                 spots_populator = function () {
                     var item = "";
                     if (this.free) {
-                        if (this.parkable) {
-                            item = '<li><a href="#confirmtake" data-rel="popup" data-transition="pop" onclick="$(\'input#takespotnumber\').val('+this.number+')">Empty</a></li>';
-                        }
-                        else {
+                        {% if isViewer %}
                             item = "<li>Empty</li>";
-                        }
+                        {% else %}
+                            if (this.parkable) {
+                                item = '<li><a href="#confirmtake" data-rel="popup" data-transition="pop" onclick="$(\'input#takespotnumber\').val('+this.number+')">Empty</a></li>';
+                            }
+                            else {
+                                item = "<li>Empty</li>";
+                            }
+                        {% endif %}
                     }
                     else {
-                        if (this.leavable) {
-                            item = '<li><a href="#confirmleave" data-rel="popup" data-transition="pop" onclick="$(\'input#leavespotnumber\').val('+this.number+')"><h3>' + this.name + '</h3><p><strong>' + this.label + ' (' + this.prettyplate + ')</strong></p><p class="ui-li-aside"><strong>' + this.comments + '</strong></p></a></li>';
-                        }
-                        else {
+                        {% if isViewer %}
                             item = '<li><h3>' + this.name + '</h3><p><strong>' + this.label + ' (' + this.prettyplate + ')</strong></p><p class="ui-li-aside"><strong>' + this.comments + '</strong></p></li>';
-                        }
+                        {% else %}
+                            if (this.leavable) {
+                                item = '<li><a href="#confirmleave" data-rel="popup" data-transition="pop" onclick="$(\'input#leavespotnumber\').val('+this.number+')"><h3>' + this.name + '</h3><p><strong>' + this.label + ' (' + this.prettyplate + ')</strong></p><p class="ui-li-aside"><strong>' + this.comments + '</strong></p></a></li>';
+                            }
+                            else {
+                                item = '<li><h3>' + this.name + '</h3><p><strong>' + this.label + ' (' + this.prettyplate + ')</strong></p><p class="ui-li-aside"><strong>' + this.comments + '</strong></p></li>';
+                            }
+                        {% endif %}
                     }
                     
                     listhtml += item;
@@ -197,10 +205,10 @@ function update_spots_generic() {
                         car_label = this.label;
                     }
                 }
-				
+                
                 $.each(data["inside_spots"], inside_spots_populator);
                 $.each(data["outside_spots"], outside_spots_populator);
-				
+                
                 if (inside_parked) {
                     // Already parked inside!
                     listhtml += '<li><h3>Today reservation: Parking for your <strong>' + car_label + '</strong> reserved <strong>inside</strong>!</h3><h5 class="ui-li-heading-small">Lobby Phone#: <a href="tel:036071812">03-607-1812</a></h5></li>';
@@ -388,13 +396,13 @@ function update_toss() {
                 $.mobile.changePage('#main');
             }
             else {
-				listhtml += '<li><h3>Tomorrow reservation:</h3></li>';
-				if(data['reservedForTommorow'] == '1') {	
-					// Already reserved spot for tommorow
-					listhtml += '<li><a href="#deleteReserveForTomorrow" data-rel="popup" data-transition="pop"><h3>Delete reservation</h3></a></li>';
-				} else {
-					listhtml += '<li><a href="#reserveForTomorrow" data-rel="popup" data-transition="pop"><h3>Reserve</h3></a></li>';
-				}
+                listhtml += '<li><h3>Tomorrow reservation:</h3></li>';
+                if(data['reservedForTommorow'] == '1') {    
+                    // Already reserved spot for tommorow
+                    listhtml += '<li><a href="#deleteReserveForTomorrow" data-rel="popup" data-transition="pop"><h3>Delete reservation</h3></a></li>';
+                } else {
+                    listhtml += '<li><a href="#reserveForTomorrow" data-rel="popup" data-transition="pop"><h3>Reserve</h3></a></li>';
+                }
 
                 sl.html(listhtml);
                 sl.listview("refresh");
@@ -483,69 +491,69 @@ function reserve_spot_for_tomorrow(plate)
     $("body").addClass("ui-disabled");
     $.mobile.showPageLoadingMsg();
 
-	$.ajax({
-		url: '/reserveSpotForTommorow?reserve=1&plate=' + plate + '&preferSpotOutside=' + ($('input#preferSpotOutside').prop("checked")? "1":"0"),
-		dataType: 'json',
-		success: function(data) {
-			if (data["result"] == "error")
-			{
-				alert(data["reason"]);
-				alert(data["args"]);
-				$.mobile.hidePageLoadingMsg();
-				$("body").removeClass("ui-disabled");
-				$.mobile.changePage('#main');
-			}
-			else
-			{
-				setTimeout(function()
-					{
-						document.location = document.location.protocol + "//" + document.location.host + document.location.pathname + "#main";
-						document.location.reload(true);
-					}, 500);
-			}
-		},
-		error: function(data) {
-			alert("Unexpected error has occured!");
-			$.mobile.hidePageLoadingMsg();
-			$("body").removeClass("ui-disabled");
-			$.mobile.changePage('#main');
-		}
-		});
+    $.ajax({
+        url: '/reserveSpotForTommorow?reserve=1&plate=' + plate + '&preferSpotOutside=' + ($('input#preferSpotOutside').prop("checked")? "1":"0"),
+        dataType: 'json',
+        success: function(data) {
+            if (data["result"] == "error")
+            {
+                alert(data["reason"]);
+                alert(data["args"]);
+                $.mobile.hidePageLoadingMsg();
+                $("body").removeClass("ui-disabled");
+                $.mobile.changePage('#main');
+            }
+            else
+            {
+                setTimeout(function()
+                    {
+                        document.location = document.location.protocol + "//" + document.location.host + document.location.pathname + "#main";
+                        document.location.reload(true);
+                    }, 500);
+            }
+        },
+        error: function(data) {
+            alert("Unexpected error has occured!");
+            $.mobile.hidePageLoadingMsg();
+            $("body").removeClass("ui-disabled");
+            $.mobile.changePage('#main');
+        }
+        });
 }
 
 function delete_reserve_spot_for_tomorrow()
 {
     $("body").addClass("ui-disabled");
     $.mobile.showPageLoadingMsg();
-	
-	$.ajax({
-		url: '/reserveSpotForTommorow?reserve=0',
-		dataType: 'json',
-		success: function(data) {
-			if (data["result"] == "error")
-			{
-				alert(data["reason"]);
-				alert(data["args"]);
-				$.mobile.hidePageLoadingMsg();
-				$("body").removeClass("ui-disabled");
-				$.mobile.changePage('#main');
-			}
-			else
-			{
-				setTimeout(function()
-					{
-						document.location = document.location.protocol + "//" + document.location.host + document.location.pathname + "#main";
-						document.location.reload(true);
-					}, 500);
-			}
-		},
-		error: function(data) {
-			alert("Unexpected error has occured!");
-			$.mobile.hidePageLoadingMsg();
-			$("body").removeClass("ui-disabled");
-			$.mobile.changePage('#main');
-		}
-		});
+    
+    $.ajax({
+        url: '/reserveSpotForTommorow?reserve=0',
+        dataType: 'json',
+        success: function(data) {
+            if (data["result"] == "error")
+            {
+                alert(data["reason"]);
+                alert(data["args"]);
+                $.mobile.hidePageLoadingMsg();
+                $("body").removeClass("ui-disabled");
+                $.mobile.changePage('#main');
+            }
+            else
+            {
+                setTimeout(function()
+                    {
+                        document.location = document.location.protocol + "//" + document.location.host + document.location.pathname + "#main";
+                        document.location.reload(true);
+                    }, 500);
+            }
+        },
+        error: function(data) {
+            alert("Unexpected error has occured!");
+            $.mobile.hidePageLoadingMsg();
+            $("body").removeClass("ui-disabled");
+            $.mobile.changePage('#main');
+        }
+        });
 }
 
 function update_theme()
@@ -585,10 +593,12 @@ $('#future').on('pageshow', function (event) {
 });
 
 $('#main').on('pageshow', function (event) {
-    update_toss();
+    {%if not isViewer %}
+        update_toss();
+    {%endif%}
     {% if multipleSpots %}
-    update_spots_specific();
+        update_spots_specific();
     {% else %}
-    update_spots_generic();
+        update_spots_generic();
     {% endif %}
 });

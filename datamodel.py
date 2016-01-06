@@ -122,6 +122,7 @@ class UserData(db.Model):
     themecolor = db.StringProperty(required=True, choices=set(["blue", "green", "purple", "red", "yellow"]), default="blue")
     mustGetSpot = db.BooleanProperty(required=True, default=False)
     multipleSpots = db.BooleanProperty(required=True, default=False)
+    isViewer = db.BooleanProperty(required=True, default=False)
 
     @staticmethod
     def GetTheme():
@@ -160,6 +161,13 @@ class UserData(db.Model):
             return False
 
     @staticmethod
+    def GetIsViewer():
+        try:
+            cfg = list(UserData.all().filter("user = ", users.get_current_user()))[0]
+            return cfg.isViewer
+        except:
+            return False
+    @staticmethod
     def MigrateUserDataSchema():
         updated = []
         
@@ -167,28 +175,30 @@ class UserData(db.Model):
             try:
                 cfg.mustGetSpot = cfg.mustGetSpot
                 cfg.multipleSpots = cfg.multipleSpots
+                cfg.isViewer = cfg.isViewer
             except:
                 cfg.mustGetSpot = False
                 cfg.multipleSpots = False
+                cfg.isViewer = False
             updated.append(cfg)
 
         if updated:
             db.put(updated)
 
         return len(updated)
-		
+        
 class TossReservation(db.Model):
-	preferSpotOutside = db.BooleanProperty()
-	car = db.ReferenceProperty(reference_class=Car)
+    preferSpotOutside = db.BooleanProperty()
+    car = db.ReferenceProperty(reference_class=Car)
 
-	def Reserve(self, reserve, car=None, preferSpotOutside = False):
-		if reserve: #join the toss
-		    if not car:
-				car = Car.GuestCar()
-		    if car != Car.GuestCar():
-				comments = ""
-		    self.car = car
-		    self.preferSpotOutside = preferSpotOutside
-		    self.put()
-		else: #unjoin toss
-		    self.delete()
+    def Reserve(self, reserve, car=None, preferSpotOutside = False):
+        if reserve: #join the toss
+            if not car:
+                car = Car.GuestCar()
+            if car != Car.GuestCar():
+                comments = ""
+            self.car = car
+            self.preferSpotOutside = preferSpotOutside
+            self.put()
+        else: #unjoin toss
+            self.delete()
